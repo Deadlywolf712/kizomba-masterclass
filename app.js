@@ -2,13 +2,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const moduleList = document.getElementById('module-list');
     const currentModuleTitle = document.getElementById('current-module-title');
     const videoGrid = document.getElementById('video-grid');
+    const mainContent = document.querySelector('.main-content');
+
+    // Inject theater container into main content
+    const theaterContainer = document.createElement('div');
+    theaterContainer.className = 'theater-container';
+    theaterContainer.innerHTML = `
+        <div class="video-player-wrapper">
+            <video id="main-player" controls controlsList="nodownload"></video>
+        </div>
+        <div class="ai-summary-container" id="ai-summary"></div>
+    `;
+    mainContent.appendChild(theaterContainer);
+
+    // Create Back button
+    const backBtn = document.createElement('button');
+    backBtn.className = 'back-button';
+    backBtn.textContent = '← Back to Gallery';
+    backBtn.style.display = 'none';
+    currentModuleTitle.parentNode.insertBefore(backBtn, currentModuleTitle.nextSibling);
+
+    const mainPlayer = document.getElementById('main-player');
+    const aiSummary = document.getElementById('ai-summary');
 
     // Mobile menu elements
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-    // Get module names from data
     const modules = Object.keys(videoData);
 
     // Render Sidebar Items
@@ -17,25 +38,24 @@ document.addEventListener('DOMContentLoaded', () => {
         li.className = 'module-item cursor-pointer';
         li.textContent = moduleName;
 
-        // Load first module by default
         if (index === 0) {
             li.classList.add('active');
             loadModule(moduleName);
         }
 
         li.addEventListener('click', () => {
-            // Update active state
             document.querySelectorAll('.module-item').forEach(el => el.classList.remove('active'));
             li.classList.add('active');
 
-            // Load new module with fade effect
+            // Switch back to grid view if in theater mode
+            closeTheaterMode();
+
             videoGrid.classList.add('fade-out');
             setTimeout(() => {
                 loadModule(moduleName);
                 videoGrid.classList.remove('fade-out');
             }, 400);
 
-            // Close mobile menu if open
             if (window.innerWidth <= 768) {
                 closeMobileMenu();
             }
@@ -44,12 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
         moduleList.appendChild(li);
     });
 
-    // Render videos for a specific module
+    backBtn.addEventListener('click', closeTheaterMode);
+
     function loadModule(moduleName) {
         currentModuleTitle.textContent = moduleName;
         const videos = videoData[moduleName];
 
-        videoGrid.innerHTML = ''; // Clear current videos
+        videoGrid.innerHTML = '';
 
         if (!videos || videos.length === 0) {
             videoGrid.innerHTML = '<p style="color: var(--color-text-muted);">No videos available for this module.</p>';
@@ -60,42 +81,80 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div');
             card.className = 'video-card';
 
-            // Generate the Google Drive preview URL
-            // If the user pastes a full URL instead of an ID, we handle it simply by checking if it contains http
-            let iframeSrc = '';
-            if (video.driveId.includes('http')) {
-                // Assuming they pasted the full preview link
-                iframeSrc = video.driveId;
-            } else if (video.driveId.startsWith('PLACEHOLDER')) {
-                // Placeholder iframe to show layout structure
-                iframeSrc = 'about:blank';
-            } else {
-                // Construct standard drive preview link from ID
-                iframeSrc = `https://drive.google.com/file/d/${video.driveId}/preview`;
-            }
-
-            // Create placeholder text if it's a placeholder
-            let placeholderBg = video.driveId.startsWith('PLACEHOLDER')
-                ? 'background-color: #222; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted);'
-                : '';
-
-            let placeholderContent = video.driveId.startsWith('PLACEHOLDER')
-                ? `<span style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center; font-family:var(--font-heading); color: var(--color-accent-gold);">Video Preview<br><span style="font-size:0.8rem; color:#888;">(Add Drive ID in data.js)</span></span>`
-                : '';
-
+            // Instead of an iframe, we just show a thumbnail placeholder for the gallery
             card.innerHTML = `
-                <div class="iframe-container" style="${placeholderBg}">
-                    ${placeholderContent}
-                    <iframe src="${iframeSrc}" allow="autoplay" allowfullscreen></iframe>
+                <div class="thumbnail-placeholder">
+                    <svg class="thumbnail-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
                 </div>
                 <h3 class="video-title">${video.title}</h3>
             `;
 
+            card.addEventListener('click', () => openTheaterMode(video));
             videoGrid.appendChild(card);
         });
     }
 
-    // Mobile Menu Handlers
+    function openTheaterMode(video) {
+        videoGrid.style.display = 'none';
+        theaterContainer.style.display = 'flex';
+        backBtn.style.display = 'inline-block';
+        currentModuleTitle.textContent = video.title;
+
+        // Construct raw download link from Drive ID so HTML5 video tag can play it
+        // Note: Google Drive blocks direct streaming sometimes, but for small personal use it usually works.
+        // A proxy like google drive direct link generator is used here.
+        mainPlayer.src = `https://drive.google.com/uc?export=download&id=${video.driveId}`;
+        mainPlayer.play().catch(e => console.log("Autoplay prevented:", e));
+
+        // Render AI Summary if it exists
+        if (video.description) {
+            // Parse markdown
+            let htmlContent = marked.parse(video.description);
+
+            // Convert [MM:SS] to clickable buttons
+            htmlContent = htmlContent.replace(/\[(\d{2}):(\d{2})\]/g, (match, mins, secs) => {
+                const totalSeconds = parseInt(mins) * 60 + parseInt(secs);
+                return `<button class="timestamp-btn" data-time="${totalSeconds}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            ${mins}:${secs}
+                        </button>`;
+            });
+
+            aiSummary.innerHTML = htmlContent;
+            aiSummary.style.display = 'block';
+
+            // Attach event listeners to timestamps
+            document.querySelectorAll('.timestamp-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const time = parseInt(e.currentTarget.getAttribute('data-time'));
+                    mainPlayer.currentTime = time;
+                    mainPlayer.play();
+                    // Scroll back up to the video
+                    mainPlayer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            });
+        } else {
+            aiSummary.style.display = 'none';
+            aiSummary.innerHTML = '';
+        }
+    }
+
+    function closeTheaterMode() {
+        mainPlayer.pause();
+        mainPlayer.src = '';
+        theaterContainer.style.display = 'none';
+        backBtn.style.display = 'none';
+        videoGrid.style.display = 'grid';
+
+        // Find active module name
+        const activeItem = document.querySelector('.module-item.active');
+        if (activeItem) {
+            currentModuleTitle.textContent = activeItem.textContent;
+        }
+    }
+
     function toggleMobileMenu() {
         sidebar.classList.toggle('open');
         sidebarOverlay.classList.toggle('active');
