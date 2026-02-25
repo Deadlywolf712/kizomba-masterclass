@@ -43,11 +43,51 @@
 
         <!-- Main Video Content Area -->
         <main class="main-content">
-            <div class="content-header">
-                <h1 id="current-module-title">Select a Module</h1>
+            <!-- List View Container -->
+            <div id="list-view-container">
+                <div class="content-header">
+                    <h1 id="current-module-title">Introduction</h1>
+                </div>
+                <div id="video-list" class="video-list">
+                    <!-- Videos injected via JS -->
+                </div>
             </div>
-            <div id="video-grid" class="video-grid">
-                <!-- Videos injected via JS -->
+
+            <!-- Theater Mode Container (Hidden by default) -->
+            <div id="theater-mode-container" class="theater-mode hidden">
+                <button id="back-to-list" class="back-btn cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Back to Module</span>
+                </button>
+
+                <div class="theater-video-wrapper">
+                    <!-- Iframe injected via JS -->
+                </div>
+
+                <div class="theater-info">
+                    <h2 id="theater-title" class="theater-title">Video Title</h2>
+
+                    <div class="ai-description-section">
+                        <div class="ai-section-header">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="var(--color-accent-gold)" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            <h3 class="ai-section-title">AI Technique Breakdown</h3>
+                        </div>
+                        <div id="ai-description-content" class="ai-description-content">
+                            <p class="placeholder-text">AI analysis will be generated here, including exact timestamps
+                                for techniques, biomechanics, and musicality breakdowns.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
