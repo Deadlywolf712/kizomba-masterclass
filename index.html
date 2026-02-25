@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kizomba Masterclass</title>
+    <!-- Luxury/Refined Aesthetic Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="logo">Kizomba <span>Masterclass</span></div>
+        <button id="menu-toggle" aria-label="Toggle Menu" class="cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+    </header>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo desktop-logo">Kizomba<br><span>Masterclass</span></div>
+                <p class="subtitle">Video Archive</p>
+            </div>
+            <ul id="module-list" class="module-list">
+                <!-- Injected via JS -->
+            </ul>
+        </nav>
+
+        <!-- Main Video Content Area -->
+        <main class="main-content">
+            <div class="content-header">
+                <h1 id="current-module-title">Select a Module</h1>
+            </div>
+            <div id="video-grid" class="video-grid">
+                <!-- Videos injected via JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Background overlay for mobile menu -->
+    <div id="sidebar-overlay" class="sidebar-overlay cursor-pointer"></div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,331 @@
+/* 
+  Kizomba Masterclass - Luxury / Refined Aesthetic 
+  Anthropic Web Design Guidelines applied 
+*/
+
+:root {
+    --color-bg-deep: #121212;
+    --color-bg-card: #1a1a1a;
+    --color-bg-hover: #232323;
+    --color-text-main: #f5f5f5;
+    --color-text-muted: #a3a3a3;
+    --color-accent-gold: #d4af37;
+    /* Muted luxury gold */
+    --color-accent-gold-hover: #f1c40f;
+    --color-border: #333333;
+
+    --font-heading: 'Cormorant Garamond', serif;
+    --font-body: 'Outfit', sans-serif;
+
+    --transition-smooth: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--color-bg-deep);
+    color: var(--color-text-main);
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+.logo {
+    font-family: var(--font-heading);
+    font-weight: 600;
+}
+
+.logo {
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+    color: var(--color-text-main);
+}
+
+.logo span {
+    color: var(--color-accent-gold);
+    font-style: italic;
+}
+
+/* Layout Container */
+.app-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 320px;
+    background-color: var(--color-bg-card);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    z-index: 100;
+    transition: transform var(--transition-smooth);
+}
+
+.sidebar-header {
+    padding: 2.5rem 2rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.subtitle {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 0.5rem;
+}
+
+.module-list {
+    list-style: none;
+    padding: 2rem 0;
+    overflow-y: auto;
+}
+
+.module-item {
+    padding: 1.2rem 2rem;
+    color: var(--color-text-muted);
+    font-size: 1.1rem;
+    transition: all var(--transition-smooth);
+    border-left: 4px solid transparent;
+    cursor: pointer;
+}
+
+.module-item:hover {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-main);
+    border-left-color: rgba(212, 175, 55, 0.4);
+    /* subtle gold */
+}
+
+.module-item.active {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-main);
+    border-left-color: var(--color-accent-gold);
+    font-weight: 600;
+}
+
+/* Main Content Area */
+.main-content {
+    flex: 1;
+    margin-left: 320px;
+    padding: 4rem 3rem;
+    min-height: 100vh;
+}
+
+.content-header {
+    margin-bottom: 3rem;
+}
+
+.content-header h1 {
+    font-size: 2.5rem;
+    color: var(--color-text-main);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 1rem;
+    display: inline-block;
+}
+
+/* Video Grid */
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 3rem;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+}
+
+.video-grid.fade-out {
+    opacity: 0;
+}
+
+.video-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: fadeInUp 0.5s ease backwards;
+}
+
+/* Staggered animation */
+.video-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.video-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.video-card:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.video-card:nth-child(4) {
+    animation-delay: 0.4s;
+}
+
+.video-title {
+    font-size: 1.3rem;
+    color: var(--color-text-main);
+    font-weight: 400;
+    border-left: 2px solid var(--color-accent-gold);
+    padding-left: 1rem;
+}
+
+/* Responsive iframe container (16:9 aspect ratio) */
+.iframe-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    /* 16:9 */
+    background-color: #000;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+}
+
+.iframe-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(212, 175, 55, 0.15);
+    /* Soft gold shadow on hover */
+    border-color: rgba(212, 175, 55, 0.4);
+}
+
+.iframe-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Mobile Header & Overlay */
+.mobile-header {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 1.5rem;
+    background-color: var(--color-bg-card);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 90;
+}
+
+.mobile-header .logo {
+    font-size: 1.5rem;
+}
+
+#menu-toggle {
+    background: none;
+    border: none;
+    color: var(--color-text-main);
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: color var(--transition-smooth);
+}
+
+#menu-toggle:hover {
+    color: var(--color-accent-gold);
+}
+
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 95;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-smooth);
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Utilities */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
+    .video-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2rem;
+    }
+
+    .main-content {
+        padding: 3rem 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .mobile-header {
+        display: flex;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 2rem 1.5rem;
+        min-height: calc(100vh - 70px);
+        /* adjust for mobile header */
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .desktop-logo,
+    .subtitle {
+        display: none;
+    }
+
+    .sidebar-header {
+        padding: 1.5rem;
+    }
+
+    .content-header h1 {
+        font-size: 2rem;
+    }
+
+    .video-grid {
+        grid-template-columns: 1fr;
+    }
+}
