@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         theaterVideoWrapper.innerHTML = ''; // Stop video playback
     }
 
-    function showTheaterMode(video) {
+    async function showTheaterMode(video) {
         listViewContainer.classList.add('hidden');
         theaterModeContainer.classList.remove('hidden');
 
@@ -89,6 +89,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Reset scroll to top
         window.scrollTo(0, 0);
+
+        // Load AI Summary
+        await loadAISummary(video.driveId);
+    }
+
+    async function loadAISummary(driveId) {
+        const aiContentContainer = document.getElementById('ai-description-content');
+
+        // Add a tiny artificial delay to maintain the "AI analyzing" feeling, even though it's instant
+        aiContentContainer.innerHTML = '<p class="placeholder-text" style="opacity:0.6; animation: pulse 1s infinite;">Analyzing technique and biomechanics...</p>';
+
+        setTimeout(() => {
+            if (typeof aiSummaries !== 'undefined' && aiSummaries[driveId]) {
+                const summaryText = aiSummaries[driveId];
+                aiContentContainer.innerHTML = formatAISummary(summaryText);
+            } else {
+                aiContentContainer.innerHTML = '<p class="placeholder-text">AI analysis is not yet available for this session.</p>';
+            }
+        }, 300); // 300ms smooth transition
+    }
+
+    function formatAISummary(text) {
+        // We will transform the plain text list into a beautiful structural list.
+        // The text typically has lines like: "- **[01:15]** - **Title**: Description..."
+
+        const lines = text.split('\n').filter(line => line.trim() !== '');
+
+        let html = '<ul class="ai-breakdown-list">';
+
+        lines.forEach(line => {
+            // Regex to extract the timestamp, title, and description
+            const regex = /-\s*\*\*(?:\[)?(\d{2}:\d{2})(?:\])?\*\*\s*-\s*\*\*(.*?)\*\*(?:\s*[:-]\s*)?(.*)/;
+            const match = line.match(regex);
+
+            if (match) {
+                const timestamp = match[1];
+                const title = match[2].trim();
+                const description = match[3].trim();
+
+                html += `
+                    <li class="ai-breakdown-item">
+                        <div class="ai-timestamp-col">
+                            <span class="ai-timestamp">[${timestamp}]</span>
+                        </div>
+                        <div class="ai-content-col">
+                            <h4 class="ai-item-title">${title}</h4>
+                            <p class="ai-item-desc">${description}</p>
+                        </div>
+                    </li>
+                `;
+            } else if (line.startsWith('Warning:')) {
+                // Ignore generated warnings
+                return;
+            } else {
+                // Generic line fallback
+                html += `<p class="ai-generic-text">${line.replace(/\*\*/g, '')}</p>`;
+            }
+        });
+
+        html += '</ul>';
+        return html;
     }
 
     backBtn.addEventListener('click', () => {
