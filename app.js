@@ -8,6 +8,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const theaterTitle = document.getElementById('theater-title');
     const backBtn = document.getElementById('back-to-list');
 
+    // Bunny Stream (Player.js) state
+    // This prevents seeking before the iframe/player is ready and avoids spamming play/seek commands.
+    let bunnyReady = false;
+    let bunnyReadyResolve = null;
+    let bunnyReadyPromise = Promise.resolve();
+    let bunnyIsPlaying = false;
+    let bunnySeekNonce = 0;
+
+    function resetBunnyState() {
+        bunnyReady = false;
+        bunnyIsPlaying = false;
+        bunnySeekNonce = 0;
+        bunnyReadyPromise = new Promise((resolve) => {
+            bunnyReadyResolve = resolve;
+        });
+    }
+
+    async function seekBunnyTo(seconds, { autoPlay = true } = {}) {
+        const iframe = document.getElementById('bunny-player');
+        if (!iframe) return;
+
+        if (window.currentBunnyPlayer) {
+            window.currentBunnyPlayer.setCurrentTime(seconds);
+            if (autoPlay) window.currentBunnyPlayer.play();
+        } else {
+            // Strip any existing time parameters from the URL
+            let src = iframe.src.replace(/&t=\d+/g, '');
+
+            // Reload the iframe exactly at the requested timestamp
+            iframe.src = src + `&t=${seconds}`;
+        }
+    }
+
     // Mobile menu elements
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.getElementById('sidebar');
@@ -64,7 +97,14 @@ document.addEventListener('DOMContentLoaded', () => {
         theaterTitle.textContent = video.title;
 
         let iframeSrc = '';
-        if (video.driveId.includes('http')) {
+        let isBunny = false;
+        let bunnyId = video.bunnyId;
+
+        if (bunnyId) {
+            // Bunny Stream format
+            iframeSrc = `https://iframe.mediadelivery.net/embed/607260/${bunnyId}?autoplay=true&preload=true`;
+            isBunny = true;
+        } else if (video.driveId.includes('http')) {
             iframeSrc = video.driveId;
         } else if (video.driveId.startsWith('PLACEHOLDER')) {
             iframeSrc = 'about:blank';
@@ -80,12 +120,43 @@ document.addEventListener('DOMContentLoaded', () => {
             ? `<span style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center; font-family:var(--font-heading); color: var(--color-accent-gold);">Video Preview<br><span style="font-size:0.8rem; color:#888;">(Add Drive ID in data.js)</span></span>`
             : '';
 
+        let iframeAttributes = `src="${iframeSrc}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen`;
+        if (isBunny) {
+            iframeAttributes = `id="bunny-player" src="${iframeSrc}" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen="true"`;
+        }
+
         theaterVideoWrapper.innerHTML = `
-            <div class="iframe-container" style="${placeholderBg}">
-                ${placeholderContent}
-                <iframe src="${iframeSrc}" allow="autoplay" allowfullscreen></iframe>
-            </div>
-        `;
+        <div class="iframe-container" style="${placeholderBg}">
+            ${placeholderContent}
+            <iframe ${iframeAttributes}></iframe>
+        </div>
+    `;
+
+        if (isBunny && typeof playerjs !== 'undefined') {
+            resetBunnyState();
+            const iframe = document.getElementById('bunny-player');
+            if (iframe) {
+                window.currentBunnyPlayer = new playerjs.Player(iframe);
+
+                // Track readiness + play state to keep seeks stable.
+                try {
+                    window.currentBunnyPlayer.on('ready', () => {
+                        bunnyReady = true;
+                        if (bunnyReadyResolve) bunnyReadyResolve();
+                    });
+                    window.currentBunnyPlayer.on('play', () => { bunnyIsPlaying = true; });
+                    window.currentBunnyPlayer.on('pause', () => { bunnyIsPlaying = false; });
+                    window.currentBunnyPlayer.on('ended', () => { bunnyIsPlaying = false; });
+                } catch (e) {
+                    console.warn('Player.js event binding failed:', e);
+                    // Don’t block seeking forever if the event API differs.
+                    bunnyReady = true;
+                    if (bunnyReadyResolve) bunnyReadyResolve();
+                }
+            }
+        } else {
+            window.currentBunnyPlayer = null;
+        }
 
         // Reset scroll to top
         window.scrollTo(0, 0);
@@ -104,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof aiSummaries !== 'undefined' && aiSummaries[driveId]) {
                 const summaryText = aiSummaries[driveId];
                 aiContentContainer.innerHTML = formatAISummary(summaryText);
+                attachTimestampListeners();
             } else {
                 aiContentContainer.innerHTML = '<p class="placeholder-text">AI analysis is not yet available for this session.</p>';
             }
@@ -124,14 +196,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const match = line.match(regex);
 
             if (match) {
-                const timestamp = match[1];
+                const timestamp = match[1]; // format MM:SS
                 const title = match[2].trim();
                 const description = match[3].trim();
+
+                // Calculate total seconds
+                const timeParts = timestamp.split(':');
+                const totalSeconds = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
 
                 html += `
                     <li class="ai-breakdown-item">
                         <div class="ai-timestamp-col">
-                            <span class="ai-timestamp">[${timestamp}]</span>
+                            <span class="ai-timestamp cursor-pointer" data-time="${totalSeconds}">[${timestamp}]</span>
                         </div>
                         <div class="ai-content-col">
                             <h4 class="ai-item-title">${title}</h4>
@@ -150,6 +226,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         html += '</ul>';
         return html;
+    }
+
+    function attachTimestampListeners() {
+        const timestamps = document.querySelectorAll('.ai-timestamp');
+        timestamps.forEach(el => {
+            el.addEventListener('click', () => {
+                const timeStr = el.getAttribute('data-time');
+
+                if (timeStr) {
+                    const seconds = parseInt(timeStr, 10);
+
+                    const iframe = document.getElementById('bunny-player');
+                    if (window.currentBunnyPlayer || iframe) {
+                        seekBunnyTo(seconds, { autoPlay: true });
+
+                        // Scroll all the way to the top to center the video
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                }
+            });
+        });
     }
 
     backBtn.addEventListener('click', () => {
